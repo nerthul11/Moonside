@@ -1,5 +1,7 @@
 ﻿
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using Modding;
 
 namespace Moonside
@@ -7,19 +9,23 @@ namespace Moonside
     public class Moonside : Mod
     {
         new public string GetName() => "Moonside";
-        public override string GetVersion() => "1.0.0.0";
+        public override string GetVersion() => "1.1.0.0";
         public override void Initialize()
         {
             ModHooks.LanguageGetHook += NoMeansYes;
         }
 
+        public override int LoadPriority() => 4444;
         private string NoMeansYes(string key, string sheetTitle, string orig)
         {
+            if (orig.All(char.IsDigit))
+                return orig;
+            
             if (key == "ELDERBUG_INTRO_NORMAL" && sheetTitle == "Elderbug")
             {
                 return "\"Yes\" is \"No\" and \"No\" is \"Yes.\" It makes perfect sense in Moonside.";
             }
-            if (sheetTitle == "Stag")
+            if (sheetTitle == "Stag" && key == "STAG_END_SPEAK")
             {
                 return "Hello! And... good-bye... Shall I...?";
             }
@@ -39,15 +45,7 @@ namespace Moonside
             {
                 return "How about I sharpen you? I just love sharpening. You don't want me to sharpen? Sidem oonsi demoon. Welc welc omewelc omeome.";
             }
-            if (sheetTitle == "Sly")
-            {
-                return "No, that's right. I am the host here.";
-            }
-            if (sheetTitle == "Iselda")
-            {
-                return "Yes, that's wrong. I am the hostess here.";
-            }
-            if (sheetTitle == "Charm Slug")
+            if (sheetTitle == "Charm Slug" && key == "CHARMSLUG_REPEAT")
             {
                 return "Welcome to Moonside. Wel Come to moo nsi ns dem oons ide.";
             }
@@ -63,8 +61,68 @@ namespace Moonside
             orig = orig.Replace(placeholder, "Yes");
             orig = orig.Replace(placeholder2, "No");
 
+            orig = orig.Replace("YES", placeholder);
+            orig = orig.Replace("NO", placeholder2);
+            orig = orig.Replace(placeholder, "NO");
+            orig = orig.Replace(placeholder2, "YES");   
+
             orig = orig.Replace("Radiance", "Mani Mani");
+            orig = orig.Replace("RADIANCE", "MANI MANI");
+
+            Random randomizer = new();
+            int scramble = randomizer.Next(4, 44);
+            if (scramble == 4)
+            {
+                orig = Shuffle(orig);
+            }
+            else if (scramble == 40)
+            {
+                orig = Reverse(orig);
+            }
             return orig;
+        }
+
+        public static string Shuffle(string orig)
+        {
+            List<string> chars = Tokenize(orig);
+            List<string> shuffled = chars.OrderBy(c => Guid.NewGuid()).ToList();
+            return string.Concat(shuffled);
+        }
+
+        public static string Reverse(string orig)
+        {
+            List<string> tokens = Tokenize(orig);
+            tokens.Reverse();
+            return string.Concat(tokens);
+        }
+
+        // Helper function to parse into regular characters and "<...>" chunks
+        private static List<string> Tokenize(string input)
+        {
+            var tokens = new List<string>();
+            int i = 0;
+
+            while (i < input.Length)
+            {
+                // Check if a '<' starts a chunk
+                if (input[i] == '<')
+                {
+                    int endIndex = input.IndexOf('>', i);
+                    if (endIndex != -1)
+                    {
+                        // Extract the chunk including '<' and '>'
+                        tokens.Add(input.Substring(i, endIndex - i + 1));
+                        i = endIndex + 1; // Move past the '>'
+                        continue;
+                    }
+                }
+
+                // Otherwise, treat it as a normal character
+                tokens.Add(input[i].ToString());
+                i++;
+            }
+
+            return tokens;
         }
     }   
 }
