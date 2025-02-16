@@ -6,8 +6,11 @@ using Modding;
 
 namespace Moonside
 {
-    public class Moonside : Mod
+    public class Moonside : Mod, IMenuMod
     {
+        public bool ToggleButtonInsideMenu => false;
+        public bool Dialogues;
+        public bool Extra;
         new public string GetName() => "Moonside";
         public override string GetVersion() => "1.1.0.0";
         public override void Initialize()
@@ -20,35 +23,42 @@ namespace Moonside
         {
             if (orig.All(char.IsDigit))
                 return orig;
-            
-            if (key == "ELDERBUG_INTRO_NORMAL" && sheetTitle == "Elderbug")
-            {
-                return "\"Yes\" is \"No\" and \"No\" is \"Yes.\" It makes perfect sense in Moonside.";
+
+            if (Dialogues)
+            {            
+                if (key == "ELDERBUG_INTRO_NORMAL" && sheetTitle == "Elderbug")
+                {
+                    return "\"Yes\" is \"No\" and \"No\" is \"Yes.\" It makes perfect sense in Moonside.";
+                }
+                if (sheetTitle == "Stag" && key == "STAG_END_SPEAK")
+                {
+                    return "Hello! And... good-bye... Shall I...?";
+                }
+                if (key == "BIGCAT_INTRO")
+                {
+                    return "Do you know whose bones are on display here? The answer is... <page>Your bones. My bones. Bone's bones. <page>Bone bone bone.";
+                }
+                if (key.Contains("MOSS_CULTIST") && sheetTitle == "Minor NPC")
+                {
+                    return "Before the soup gets cold, we must care for Mani Mani. Before the knife gets rusty, we must care for Mani Mani.";
+                }
+                if (key.Contains("MINER_EARLY") && sheetTitle == "Minor NPC")
+                {
+                    return "Good morn... Uhhh... not morning. Here in Moonside, it's always the middle of the night. This is a headline from tonight's Moonside Press... \"Mani Mani is  always Mani Mani  at Mani Mani with all Mani Mani  Mani\"";
+                }
+                if (key == "MINER_INFECTED" && sheetTitle == "Minor NPC")
+                {
+                    return "How about I sharpen you? I just love sharpening. You don't want me to sharpen? Sidem oonsi demoon. Welc welc omewelc omeome.";
+                }
+                if (sheetTitle == "Charm Slug" && key == "CHARMSLUG_REPEAT")
+                {
+                    return "Welcome to Moonside. Wel Come to moo nsi ns dem oons ide.";
+                }
+
+                orig = orig.Replace("Radiance", "Mani Mani");
+                orig = orig.Replace("RADIANCE", "MANI MANI");
             }
-            if (sheetTitle == "Stag" && key == "STAG_END_SPEAK")
-            {
-                return "Hello! And... good-bye... Shall I...?";
-            }
-            if (key == "BIGCAT_INTRO")
-            {
-                return "Do you know whose bones are on display here? The answer is... your bones. My bones. Bone's bones. Bone bone bone.";
-            }
-            if (key.Contains("MOSS_CULTIST") && sheetTitle == "Minor NPC")
-            {
-                return "Before the soup gets cold, we must care for Mani Mani. Before the knife gets rusty, we must care for Mani Mani.";
-            }
-            if (key.Contains("MINER_EARLY") && sheetTitle == "Minor NPC")
-            {
-                return "Good morn... Uhhh... not morning. Here in Moonside, it's always the middle of the night. This is a headline from tonight's Moonside Press... \"Mani Mani is  always Mani Mani  at Mani Mani with all Mani Mani  Mani\"";
-            }
-            if (key == "MINER_INFECTED" && sheetTitle == "Minor NPC")
-            {
-                return "How about I sharpen you? I just love sharpening. You don't want me to sharpen? Sidem oonsi demoon. Welc welc omewelc omeome.";
-            }
-            if (sheetTitle == "Charm Slug" && key == "CHARMSLUG_REPEAT")
-            {
-                return "Welcome to Moonside. Wel Come to moo nsi ns dem oons ide.";
-            }
+
             string placeholder = "MOONSIDE";
             string placeholder2 = "SOONMIDE";
             orig = orig.Replace("yes", placeholder);
@@ -66,18 +76,20 @@ namespace Moonside
             orig = orig.Replace(placeholder, "NO");
             orig = orig.Replace(placeholder2, "YES");   
 
-            orig = orig.Replace("Radiance", "Mani Mani");
-            orig = orig.Replace("RADIANCE", "MANI MANI");
+            
 
-            Random randomizer = new();
-            int scramble = randomizer.Next(4, 44);
-            if (scramble == 4)
+            if (Extra)
             {
-                orig = Shuffle(orig);
-            }
-            else if (scramble == 40)
-            {
-                orig = Reverse(orig);
+                Random randomizer = new();
+                int scramble = randomizer.Next(4, 44);
+                if (scramble == 4)
+                {
+                    orig = Shuffle(orig);
+                }
+                else if (scramble == 40)
+                {
+                    orig = Reverse(orig);
+                }
             }
             return orig;
         }
@@ -123,6 +135,15 @@ namespace Moonside
             }
 
             return tokens;
+        }
+
+        public List<IMenuMod.MenuEntry> GetMenuData(IMenuMod.MenuEntry? toggleButtonEntry)
+        {
+            return
+            [
+                new IMenuMod.MenuEntry("Custom Dialogues", ["Disabled", "Enabled"], "Use a few NPC custom dialogues.", opt => Dialogues = opt == 1, () => Dialogues ? 1 : 0),
+                new IMenuMod.MenuEntry("Easter Egg", ["Disabled", "Enabled"], "Further mess up with text.", opt => Extra = opt == 1, () => Extra ? 1 : 0)
+            ];
         }
     }   
 }
